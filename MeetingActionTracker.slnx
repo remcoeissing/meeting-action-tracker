@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MeetingActionTracker.Api/MeetingActionTracker.Api.csproj" />
+  </Folder>
+</Solution>

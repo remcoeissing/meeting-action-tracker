@@ -1,0 +1,452 @@
+openapi: 3.0.3
+info:
+  title: Meeting Action Tracker
+  version: 1.0.0
+  description: Local-only, unauthenticated committee workspace. All IDs are positive integers. No committee or meeting deletion is exposed.
+servers:
+  - url: /api/v1
+paths:
+  /committees:
+    get:
+      operationId: listCommittees
+      responses:
+        '200':
+          description: Committees
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Committee' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createCommittee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CommitteeInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Committee' }
+        default: { $ref: '#/components/responses/Error' }
+  /committees/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    put:
+      operationId: updateCommittee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CommitteeInput' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Committee' }
+        default: { $ref: '#/components/responses/Error' }
+  /members:
+    get:
+      operationId: listMembers
+      responses:
+        '200':
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Member' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MemberInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Member' }
+        default: { $ref: '#/components/responses/Error' }
+  /members/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    put:
+      operationId: updateMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MemberInput' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Member' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteMember
+      responses:
+        '204': { description: Deleted; only members with no memberships or action references }
+        default: { $ref: '#/components/responses/Error' }
+  /committees/{id}/members/{memberId}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+      - { name: memberId, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    put:
+      operationId: addMembership
+      responses:
+        '204': { description: Membership exists }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: removeMembership
+      responses:
+        '204': { description: Removed; rejected with 409 when assigned actions reference this membership }
+        default: { $ref: '#/components/responses/Error' }
+  /meetings:
+    get:
+      operationId: listMeetings
+      parameters:
+        - { name: committeeId, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: Meetings ordered by scheduled time descending
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Meeting' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createMeeting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MeetingInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Meeting' }
+        default: { $ref: '#/components/responses/Error' }
+  /meetings/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    get:
+      operationId: getMeeting
+      responses:
+        '200':
+          description: Meeting with ordered agenda and documents
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MeetingDetail' }
+        default: { $ref: '#/components/responses/Error' }
+    put:
+      operationId: updateMeeting
+      description: Committee cannot change after creation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MeetingInput' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Meeting' }
+        default: { $ref: '#/components/responses/Error' }
+  /meetings/{id}/summary:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    put:
+      operationId: updateSummary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [summary]
+              properties:
+                summary: { type: string, maxLength: 50000 }
+      responses:
+        '204': { description: Saved }
+        default: { $ref: '#/components/responses/Error' }
+  /meetings/{id}/agenda:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    post:
+      operationId: createAgendaItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AgendaInput' }
+      responses:
+        '201':
+          description: Appended
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AgendaItem' }
+        default: { $ref: '#/components/responses/Error' }
+  /meetings/{id}/agenda/order:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    put:
+      operationId: reorderAgenda
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemIds]
+              properties:
+                itemIds:
+                  type: array
+                  uniqueItems: true
+                  description: Every current agenda item ID exactly once, in desired order.
+                  items: { type: integer, minimum: 1 }
+      responses:
+        '204': { description: Reordered atomically }
+        default: { $ref: '#/components/responses/Error' }
+  /agenda/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    put:
+      operationId: updateAgendaItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AgendaInput' }
+      responses:
+        '204': { description: Updated }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteAgendaItem
+      responses:
+        '204': { description: Deleted and remaining items renumbered; documents must be removed first }
+        default: { $ref: '#/components/responses/Error' }
+  /agenda/{id}/documents:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    post:
+      operationId: uploadDocument
+      description: Maximum 20 MiB (20971520 bytes); PDF, DOCX, XLSX, PPTX, or UTF-8 TXT. Validate contents; 415 unsupported, 413 too large.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Stored
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Document' }
+        default: { $ref: '#/components/responses/Error' }
+  /documents/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    get:
+      operationId: downloadDocument
+      responses:
+        '200':
+          description: Attachment download with original safe filename
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteDocument
+      responses:
+        '204': { description: Removed }
+        default: { $ref: '#/components/responses/Error' }
+  /actions:
+    get:
+      operationId: listActions
+      parameters:
+        - { name: committeeId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: meetingId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: assigneeId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/ActionStatus' } }
+        - { name: outstanding, in: query, schema: { type: boolean } }
+        - { name: overdue, in: query, schema: { type: boolean } }
+        - name: today
+          in: query
+          required: true
+          description: Browser-local calendar date used to classify overdue actions.
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Actions ordered by due date then ID
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Action' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActionInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Action' }
+        default: { $ref: '#/components/responses/Error' }
+  /actions/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+    put:
+      operationId: updateAction
+      description: Meeting cannot change after creation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActionInput' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Action' }
+        default: { $ref: '#/components/responses/Error' }
+components:
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+  responses:
+    Error:
+      description: "Problem Details: 400 validation, 404 missing, 409 conflict, 413 size, 415 type, 500 storage/unexpected failure."
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Problem:
+      type: object
+      required: [title, status]
+      properties:
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        errors: { type: object, additionalProperties: { type: array, items: { type: string } } }
+    CommitteeInput:
+      type: object
+      required: [name, description]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 4000 }
+    Committee:
+      allOf:
+        - { $ref: '#/components/schemas/CommitteeInput' }
+        - type: object
+          required: [id, memberIds]
+          properties:
+            id: { type: integer }
+            memberIds: { type: array, items: { type: integer } }
+    MemberInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+    Member:
+      allOf:
+        - { $ref: '#/components/schemas/MemberInput' }
+        - type: object
+          required: [id]
+          properties:
+            id: { type: integer }
+    MeetingInput:
+      type: object
+      required: [committeeId, title, scheduledAt, location]
+      properties:
+        committeeId: { type: integer, minimum: 1 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        scheduledAt: { type: string, format: date-time, description: ISO 8601 timestamp with timezone; stored in UTC }
+        location: { type: string, maxLength: 500 }
+    Meeting:
+      allOf:
+        - { $ref: '#/components/schemas/MeetingInput' }
+        - type: object
+          required: [id, committeeName, summary]
+          properties:
+            id: { type: integer }
+            committeeName: { type: string }
+            summary: { type: string }
+    MeetingDetail:
+      allOf:
+        - { $ref: '#/components/schemas/Meeting' }
+        - type: object
+          required: [agenda]
+          properties:
+            agenda: { type: array, items: { $ref: '#/components/schemas/AgendaItem' } }
+    AgendaInput:
+      type: object
+      required: [title, description]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 4000 }
+    AgendaItem:
+      allOf:
+        - { $ref: '#/components/schemas/AgendaInput' }
+        - type: object
+          required: [id, position, documents]
+          properties:
+            id: { type: integer }
+            position: { type: integer, minimum: 1 }
+            documents: { type: array, items: { $ref: '#/components/schemas/Document' } }
+    Document:
+      type: object
+      required: [id, fileName, contentType, size, uploadedAt]
+      properties:
+        id: { type: integer }
+        fileName: { type: string }
+        contentType: { type: string }
+        size: { type: integer, format: int64 }
+        uploadedAt: { type: string, format: date-time }
+    ActionStatus:
+      type: string
+      enum: [Open, InProgress, Done]
+    ActionInput:
+      type: object
+      required: [meetingId, title, description, assigneeId, dueDate, status]
+      properties:
+        meetingId: { type: integer, minimum: 1 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 4000 }
+        assigneeId: { type: integer, minimum: 1 }
+        dueDate: { type: string, format: date }
+        status: { $ref: '#/components/schemas/ActionStatus' }
+    Action:
+      allOf:
+        - { $ref: '#/components/schemas/ActionInput' }
+        - type: object
+          required: [id, committeeId, committeeName, meetingTitle, assigneeName]
+          properties:
+            id: { type: integer }
+            committeeId: { type: integer }
+            committeeName: { type: string }
+            meetingTitle: { type: string }
+            assigneeName: { type: string }

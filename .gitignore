@@ -1,0 +1,10 @@
+.dotnet/
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/data/
+*.user
+.env
+.env.local
+*.log
