@@ -83,7 +83,8 @@ small,.muted { color: var(--cp-text-muted); }
 .sidebar-bottom { margin-top: auto; padding-top: 32px; }
 .local-label { border: 1px solid var(--cp-border); border-radius: .625rem; padding: 12px; font-size: 12px; margin-bottom: 16px; }
 .local-label strong { display: block; color: var(--cp-text); }
-.theme-button { width: 100%; font-size: 13px; }
+.theme-button { width: 40px; height: 40px; display: grid; place-items: center; padding: 8px; flex-shrink: 0; }
+.theme-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 .workspace { min-width: 0; }
 .topbar { height: 72px; border-bottom: 1px solid var(--cp-border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; background: var(--cp-bg-elevated); gap: 16px; }
 .topbar small { font-size: 12px; }
@@ -171,7 +172,6 @@ td .muted { font-size: 12px; }
   .nav-link { padding: 8px 12px; }
   .sidebar-bottom { margin: 0; padding: 0; position: absolute; top: 20px; right: 16px; }
   .local-label { display: none; }
-  .theme-button { width: auto; padding: 6px 10px; font-size: 11px; }
   .topbar { height: 52px; padding: 0 20px; }
   .topbar small { display: none; }
   .content { padding: 24px 16px; }
